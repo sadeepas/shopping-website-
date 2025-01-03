@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        body {
+            background-color: #f0f0f0; /* Light grey background */
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        .image-gallery {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .gallery-item {
+            flex: 0 0 auto;
+            width: 150px;
+            height: 150px;
+            margin-right: 10px;
+            scroll-snap-align: start;
+            border-radius: 0.375rem;
+            overflow: hidden;
+            box-shadow: 0 2px 4px 0 rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            transform-origin: center;
+
+        }
+        .gallery-item:hover {
+            transform: scale(1.05);
+        }
+        #toast {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+        }
+        .product-detail-container {
+            animation: fadeIn 0.3s ease-out forwards; /* Apply the animation */
+            transform: scale(0.9); /* Start with a slightly smaller scale */
+            opacity: 0; /* Start with 0 opacity */
+        }
+        @keyframes fadeIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+         #image-modal {
+             display: none;
+             position: fixed;
+             z-index: 100;
+             left: 0;
+             top: 0;
+             width: 100%;
+            height: 100%;
+            overflow: auto;
+             background-color: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+               animation: zoomIn 0.3s ease-out forwards;
+                transform: scale(0.8);
+                 opacity: 0;
+            }
+        @keyframes zoomIn {
+            from {
+              transform: scale(0.8);
+              opacity: 0;
+            }
+              to {
+                transform: scale(1);
+                 opacity: 1;
+               }
+          }
+        .other-product-card {
+           transition: all 0.3s ease;
+           transform-origin: center;
+       }
+        .other-product-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 font-sans">
+<header class="sticky top-0 z-50 bg-white shadow-md">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <a href="index.html" class="text-2xl font-bold text-indigo-600 flex items-center">
+                <i data-feather="zap" class="mr-2"></i>Tech Haven
+            </a>
+        </div>
+        <nav class="hidden md:flex space-x-6">
+            <a href="index.html#home" class="text-gray-600 hover:text-indigo-500 transition-colors">Home</a>
+            <a href="index.html#products" class="text-gray-600 hover:text-indigo-500 transition-colors">Products</a>
+            <a href="index.html#deals" class="text-gray-600 hover:text-indigo-500 transition-colors">Deals</a>
+            <a href="index.html#contact" class="text-gray-600 hover:text-indigo-500 transition-colors">Contact</a>
+        </nav>
+        <div class="flex items-center space-x-4">
+            <button class="text-gray-600 hover:text-indigo-500 transition-colors">
+                <i data-feather="search" class="w-5 h-5"></i>
+            </button>
+            <button id="cart-button" class="relative text-gray-600 hover:text-indigo-500 transition-colors">
+                <i data-feather="shopping-cart" class="w-5 h-5"></i>
+                <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">0</span>
+            </button>
+            <div id="user-info" class="hidden items-center space-x-2">
+                <span id="user-name" class="font-semibold"></span>
+                <span id="user-email" class="text-sm text-gray-600"></span>
+                <button id="logout-button" class="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors">
+                    Logout
+                </button>
+            </div>
+            <button id="login-button" class="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors">
+                Login
+            </button>
+        </div>
+    </div>
+</header>
+<div class="container mx-auto px-4 py-8 product-detail-container">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Product Image Gallery -->
+        <div class="flex flex-col">
+            <img id="main-image" src="" alt="Product Main Image" class="w-full h-auto rounded-md mb-4 shadow-lg object-cover cursor-pointer" style="max-height: 400px;">
+             <div class="image-gallery mt-2">
+                <!-- Image thumbnails will be placed here -->
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="flex flex-col">
+            <h1 id="product-name" class="text-3xl font-bold mb-4"></h1>
+            <p id="product-description" class="text-gray-700 mb-6"></p>
+            <div class="flex items-center justify-between mb-4">
+                <span id="product-price" class="text-2xl font-bold text-indigo-600"></span>
+                <!-- Pricing Offer -->
+                <span id="product-offer" class="bg-green-200 text-green-700 px-2 py-1 rounded-full text-sm font-medium"></span>
+            </div>
+            <div class="mb-6">
+                <button id="add-to-cart" class="bg-red-500 text-white px-6 py-3 rounded-full hover:bg-red-600 transition-colors mr-2">
+                    Add to Cart
+                </button>
+                <button id="buy-now" class="bg-indigo-500 text-white px-6 py-3 rounded-full hover:bg-indigo-600 transition-colors">
+                    Buy Now
+                </button>
+            </div>
+            <div class="border-t pt-4 mt-4">
+                <h4 class="font-semibold mb-2">Delivery Information</h4>
+                <div class="mb-2">
+                    <i data-feather="truck" class="mr-1 text-gray-600"></i>
+                    <span id="delivery-cost" class="text-gray-700"></span>
+                </div>
+                <div class="mb-2">
+                    <i data-feather="clock" class="mr-1 text-gray-600"></i>
+                    <span id="delivery-time" class="text-gray-700"></span>
+                </div>
+            </div>
+            <div class="border-t pt-4 mt-4">
+                <h4 class="font-semibold mb-2">Seller Information</h4>
+                <div class="flex items-center">
+                    <i data-feather="user" class="mr-1 text-gray-600"></i>
+                    <span id="seller-name" class="text-gray-700"></span>
+                </div>
+            </div>
+            <div class="border-t pt-4 mt-4">
+                <h4 class="font-semibold mb-2">Scan to View</h4>
+                <div id="qr-code" >
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Other Products -->
+    <div class="mt-12 border-t pt-6">
+        <h2 class="text-2xl font-bold mb-6 text-center">Other Products You Might Like</h2>
+        <div id="other-products" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <!--Other product ads will be placed here-->
+        </div>
+    </div>
+</div>
+<div id="toast" class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg">
+    Item added to cart!
+</div>
+
+<div id="image-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+     <div class="modal-content bg-white rounded-lg w-full max-w-md mx-4 p-6 flex justify-center">
+          <img id="modal-image" src="" alt="Modal Image" class="object-cover max-h-[80vh] max-w-[90vw]">
+            <button id="close-modal" class="absolute top-4 right-4  text-gray-500 hover:text-gray-700">
+                <i data-feather="x" class="w-6 h-6"></i>
+            </button>
+     </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+            feather.replace();
+            const products = [
+                {
+                    id: 1,
+                    name: 'Quantum Laptop Pro',
+                    description: 'Ultra-performance computing',
+                    price: 1499,
+                    image: 'laptop.jpg',
+                    images: ['lap 2.jpg','lap3.jpg','laptop.jpg'],
+                    offer: '20% Off',
+                    deliveryCost: 'Free',
+                    deliveryTime: '2-3 Days',
+                    seller: 'Tech Solutions Inc',
+                },
+                {
+                    id: 2,
+                    name: 'NextGen Smartphone',
+                    description: 'Intelligent mobile experience',
+                    price: 1099,
+                    image: 'phone.jpg',
+                    images: ['phone.jpg','phone 2.jpg','phone 3.jpg'],
+                    offer: '10% Off',
+                    deliveryCost: '$10',
+                    deliveryTime: '1-2 Days',
+                    seller: 'Mobile World Ltd',
+                },
+                {
+                    id: 3,
+                    name: 'AirBuds Pro',
+                    description: 'Immersive sound technology',
+                    price: 249,
+                    image: 'i bud.jpg',
+                    images: ['i bud 2.jpg','buds 3.jpg','buds 4.jpg'],
+                    offer: '5% Off',
+                    deliveryCost: 'Free',
+                    deliveryTime: '3-4 Days',
+                    seller: 'Sound Wave Audio',
+                },
+                {
+                    id: 4,
+                    name: 'Smart Watch Ultra',
+                    description: 'Advanced health tracking',
+                    price: 399,
+                    image: 'watch.jpg',
+                    images: ['watch 2.jpg','watch 3.jpg','watch 4.jpg'],
+                    offer: '20% Off',
+                    deliveryCost: '$5',
+                    deliveryTime: '2 Days',
+                    seller: 'HealthTech Innovations',
+                },
+                {
+                    id: 5,
+                    name: 'Aura Speakers',
+                    description: 'Premium sound quality',
+                    price: 299,
+                    image: 'speker.jpg',
+                    images: ['speker 2.jpg','speker 3.jpg','speker 4.jpg'],
+                    offer: '15% Off',
+                    deliveryCost: '$5',
+                    deliveryTime: '2 Days',
+                    seller: 'sound Innovations',
+                },
+                {
+                    id: 6,
+                    name: 'Nova PC Tower',
+                    description: 'High-performance gaming PC',
+                    price: 1799,
+                    image: 'pc.jpg',
+                    images: ['pc 2.jpg','pc 3.jpg','pc 4.jpg'],
+                    offer: '14% Off',
+                    deliveryCost: '$5',
+                    deliveryTime: '2 Days',
+                    seller: 'pc Innovations',
+                },
+                {
+                    id: 7,
+                    name: 'Vision 4K Monitor',
+                    description: 'Crystal-clear display',
+                    price: 599,
+                    image: 'monitor.jpg',
+                    images: ['monitor 2.jpg','monitor 3.jpg','monitor 4.jpg'],
+                    offer: '5% Off',
+                    deliveryCost: '$5',
+                    deliveryTime: '2 Days',
+                    seller: 'sound Innovations',
+                },
+                {
+                    id: 8,
+                    name: 'Ultra Router Pro',
+                    description: 'High-speed wireless connectivity',
+                    price: 199,
+                    image: 'router.jpg',
+                    images: ['router 2.jpg','router3.jpg','router 4.jpg'],
+                    offer: '10% Off',
+                    deliveryCost: '$5',
+                    deliveryTime: '2 Days',
+                    seller: ' safes Innovations',
+                },
+                {
+                    id: 9,
+                    name: ' gaming mouse',
+                    description: 'Ergonomic gaming mouse',
+                    price: 69,
+                    image: 'mouse.jpg',
+                    images: ['mouse 2.jpg','mouse 3.jpg','mouse 4.jpg'],
+                    offer: '11% Off',
+                    deliveryCost: '$5',
+                    deliveryTime: '2 Days',
+                    seller: 'future Innovations',
+                }
+         
+           
+            ];
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            const product = products.find(p => p.id == productId);
+            if(product){
+                document.getElementById('product-name').textContent = product.name;
+                document.getElementById('product-description').textContent = product.description;
+                document.getElementById('product-price').textContent = `$${product.price}`;
+                document.getElementById('main-image').src = product.image;
+                document.getElementById('product-offer').textContent = product.offer;
+                document.getElementById('delivery-cost').textContent = `Cost: ${product.deliveryCost}`;
+                document.getElementById('delivery-time').textContent = `Delivery: ${product.deliveryTime}`;
+                document.getElementById('seller-name').textContent = product.seller;
+
+                const imageGallery = document.querySelector('.image-gallery');
+                product.images.forEach(image => {
+                    const galleryItem = document.createElement('div');
+                    galleryItem.classList.add('gallery-item');
+                    const img = document.createElement('img');
+                    img.src = image;
+                    img.alt = product.name;
+                    img.classList.add('object-cover', 'w-full', 'h-full');
+                    galleryItem.appendChild(img);
+                    imageGallery.appendChild(galleryItem);
+                    galleryItem.addEventListener('click', () => {
+                       document.getElementById('modal-image').src = image;
+                      openModal();
+                   });
+                });
+
+                // Generate QR code
+                const qrCodeDiv = document.getElementById('qr-code');
+                const qrCode = new QRCode(qrCodeDiv, {
+                    text: window.location.href,
+                    width: 128,
+                    height: 128,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+                 const mainImage =  document.getElementById('main-image');
+                 mainImage.addEventListener('click', () => {
+                       document.getElementById('modal-image').src = product.image;
+                      openModal();
+                  });
+            } else {
+                document.getElementById('product-name').textContent = 'Product not found';
+            }
+           const otherProductContainer = document.getElementById('other-products');
+           const otherProducts = products.filter(p => p.id != productId);
+            otherProducts.forEach(product => {
+                const card = document.createElement('div');
+                 card.classList.add('bg-white', 'rounded-lg', 'shadow-lg', 'overflow-hidden','other-product-card');
+                const productLink = document.createElement('a');
+                productLink.href = `product-detail.html?id=${product.id}`;
+                productLink.target = '_blank';
+
+                productLink.innerHTML =`
+                    <div class="relative">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover">
+                        <div class="absolute top-2 right-2 bg-primary-500 text-white px-2 py-1 rounded-full text-sm">
+                            New
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">${product.name}</h3>
+                        <p class="text-gray-600 mb-4">${product.description}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xl font-bold text-indigo-600">$${product.price}</span>
+                       </div>
+                    </div>
+                 `;
+                card.appendChild(productLink);
+                otherProductContainer.appendChild(card)
+           });
+           const modal = document.getElementById('image-modal');
+           const closeModalButton = document.getElementById('close-modal');
+
+            function openModal() {
+               modal.style.display = 'flex';
+             }
+
+             function closeModal() {
+                   modal.style.display = 'none';
+                }
+              closeModalButton.addEventListener('click', closeModal);
+            class CartManager {
+               constructor() {
+                    this.cart = JSON.parse(localStorage.getItem('cart')) || [];
+                    this.cartButton = document.getElementById('cart-button');
+                    this.cartModal = document.getElementById('cart-modal');
+                    this.closeCartButton = document.getElementById('close-cart');
+                    this.cartItemsContainer = document.getElementById('cart-items');
+                     this.cartTotalElement = document.getElementById('cart-total');
+                    this.checkoutButton = document.getElementById('checkout-button');
+                    this.cartCountElement = document.getElementById('cart-count');
+                     this.toast = document.getElementById('toast');
+                     this.initEventListeners();
+                    this.updateCartDisplay();
+               }
+                 initEventListeners() {
+                    this.cartButton.addEventListener('click', () => this.openCart());
+                   this.closeCartButton.addEventListener('click', () => this.closeCart());
+                    this.checkoutButton.addEventListener('click', () => this.checkout());
+
+                    const addToCartButton = document.getElementById('add-to-cart');
+                   if(addToCartButton){
+                      addToCartButton.addEventListener('click',() => {
+                             if(product){
+                                 this.addToCart(product);
+                            }
+                         });
+                    }
+                 }
+                 addToCart(product) {
+                   const existingItem = this.cart.find(item => item.id === product.id);
+                    if (existingItem) {
+                       existingItem.quantity += 1;
+                    } else {
+                      this.cart.push({...product, quantity: 1});
+                     }
+                    this.saveCart();
+                     this.updateCartDisplay();
+                     this.showToast();
+                 }
+                 removeFromCart(productId) {
+                     this.cart = this.cart.filter(item => item.id !== productId);
+                     this.saveCart();
+                     this.updateCartDisplay();
+                 }
+                updateQuantity(productId, quantity) {
+                     const item = this.cart.find(item => item.id === productId);
+                     if (item) {
+                         item.quantity = quantity;
+                        if (item.quantity <= 0) {
+                           this.removeFromCart(productId);
+                        } else {
+                            this.saveCart();
+                            this.updateCartDisplay();
+                        }
+                   }
+                 }
+                 saveCart() {
+                    localStorage.setItem('cart', JSON.stringify(this.cart));
+                    this.updateCartCount();
+                 }
+                 updateCartCount() {
+                    const totalItems = this.cart.reduce((total, item) => total + item.quantity, 0);
+                    this.cartCountElement.textContent = totalItems;
+                 }
+                 updateCartDisplay() {
+                   this.cartItemsContainer.innerHTML = '';
+                   let total = 0;
+                  this.cart.forEach(item => {
+                       const itemTotal = item.price * item.quantity;
+                       total += itemTotal;
+                        const cartItemElement = document.createElement('div');
+                         cartItemElement.classList.add('flex', 'items-center', 'justify-between', 'border-b', 'pb-2');
+                         cartItemElement.innerHTML = `
+                            <div class="flex items-center space-x-4">
+                                <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded">
+                                <div>
+                                    <h3 class="font-semibold">${item.name}</h3>
+                                    <p class="text-gray-600">$${item.price}</p>
+                                </div>
+                           </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="quantity-decrease text-gray-600 hover:text-gray-900" data-id="${item.id}">-</button>
+                                <span class="quantity">${item.quantity}</span>
+                                <button class="quantity-increase text-gray-600 hover:text-gray-900" data-id="${item.id}">+</button>
+                                <span class="font-semibold">$${itemTotal.toFixed(2)}</span>
+                                 <button class="remove-item text-red-500 hover:text-red-700" data-id="${item.id}">
+                                    <i data-feather="trash-2"></i>
+                                </button>
+                            </div>
+                         `;
+                         this.cartItemsContainer.appendChild(cartItemElement);
+                   });
+                     this.cartTotalElement.textContent = `$${total.toFixed(2)}`;
+                   this.updateCartCount();
+                     this.attachCartItemListeners();
+                 }
+                attachCartItemListeners() {
+                    document.querySelectorAll('.remove-item').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                           const productId = parseInt(e.currentTarget.dataset.id);
+                           this.removeFromCart(productId);
+                         });
+                     });
+                   document.querySelectorAll('.quantity-decrease').forEach(button => {
+                       button.addEventListener('click', (e) => {
+                            const productId = parseInt(e.currentTarget.dataset.id);
+                           const currentItem = this.cart.find(item => item.id === productId);
+                           this.updateQuantity(productId, currentItem.quantity - 1);
+                        });
+                   });
+                    document.querySelectorAll('.quantity-increase').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const productId = parseInt(e.currentTarget.dataset.id);
+                            const currentItem = this.cart.find(item => item.id === productId);
+                           this.updateQuantity(productId, currentItem.quantity + 1);
+                        });
+                    });
+                    feather.replace();
+                }
+                 openCart() {
+                    this.cartModal.style.display = 'flex';
+                 }
+                 closeCart() {
+                   this.cartModal.style.display = 'none';
+                 }
+                 showToast() {
+                   this.toast.style.display = 'block';
+                    setTimeout(() => {
+                        this.toast.style.display = 'none';
+                   }, 2000);
+                 }
+               checkout() {
+                    alert('Thank you for your purchase! Checkout functionality will be implemented in a future version.');
+                    this.cart = [];
+                    this.saveCart();
+                     this.updateCartDisplay();
+                     this.closeCart();
+                 }
+            }
+           class AuthManager {
+               constructor() {
+                 this.loginModal = document.getElementById('login-modal');
+                  this.signupModal = document.getElementById('signup-modal');
+                 this.loginButton = document.getElementById('login-button');
+                 this.closeLoginButton = document.getElementById('close-login');
+                   this.closeSignupButton = document.getElementById('close-signup');
+                  this.openSignupButton = document.getElementById('open-signup');
+                   this.openLoginButton = document.getElementById('open-login');
+                 this.loginForm = document.getElementById('login-form');
+                    this.signupForm = document.getElementById('signup-form');
+
+                    this.initEventListeners();
+                    this.checkLoginState();
+                }
+                 checkLoginState() {
+                      const storedUser = localStorage.getItem('loggedInUser');
+                      if (storedUser) {
+                        loggedInUser = JSON.parse(storedUser);
+                         this.setUserLoggedIn(loggedInUser);
+                      }
+                        this.updateLoginButtonVisibility();
+                    }
+
+                 initEventListeners() {
+                   this.loginButton.addEventListener('click', () => this.openLogin());
+                   this.closeLoginButton.addEventListener('click', () => this.closeLogin());
+                   this.closeSignupButton.addEventListener('click', () => this.closeSignup());
+                    this.openSignupButton.addEventListener('click', () => this.openSignup());
+                    this.openLoginButton.addEventListener('click', () => this.openLogin());
+                    const logoutButton = document.getElementById('logout-button');
+                     if(logoutButton){
+                        logoutButton.addEventListener('click', () => this.handleLogout());
+                    }
+
+                   this.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+                   this.signupForm.addEventListener('submit', (e) => this.handleSignup(e));
+
+                }
+                   setUserLoggedIn(user) {
+                      isLoggedIn = true;
+                      loggedInUser = user;
+                     const userNameSpan = document.getElementById('user-name');
+                     const userEmailSpan = document.getElementById('user-email');
+                    const userInfoDiv = document.getElementById('user-info');
+                    const loginButton = document.getElementById('login-button');
+                      userNameSpan.textContent = user.name;
+                     userEmailSpan.textContent = user.email;
+                       userInfoDiv.classList.remove('hidden');
+                      loginButton.style.display = 'none';
+                       localStorage.setItem('loggedInUser', JSON.stringify(user)); // Store the user
+                  }
+
+                   updateLoginButtonVisibility() {
+                     const loginButton = document.getElementById('login-button');
+                     const userInfoDiv = document.getElementById('user-info');
+                    if (isLoggedIn) {
+                         loginButton.style.display = 'none';
+                        userInfoDiv.classList.remove('hidden');
+                     } else {
+                         loginButton.style.display = 'block';
+                        userInfoDiv.classList.add('hidden');
+                        }
+                   }
+
+                  openLogin() {
+                    this.closeSignup();
+                    this.loginModal.style.display = 'flex';
+                  }
+
+                   closeLogin() {
+                     this.loginModal.style.display = 'none';
+                    }
+
+                  openSignup() {
+                       this.closeLogin();
+                       this.signupModal.style.display = 'flex';
+                 }
+
+                  closeSignup() {
+                       this.signupModal.style.display = 'none';
+                    }
+                  handleLogout() {
+                    isLoggedIn = false;
+                     loggedInUser = null;
+                     localStorage.removeItem('loggedInUser');
+                       this.updateLoginButtonVisibility();
+                  }
+
+
+                  handleLogin(event) {
+                       event.preventDefault();
+                        const email = document.getElementById('login-email').value;
+                        const password = document.getElementById('login-password').value;
+                        // Here you would check against the database or an authentication service
+                         // Placeholder for successful login
+                         const dummyUser = {name: 'John Doe', email: email}; // replace with user data from response
+                        this.setUserLoggedIn(dummyUser);
+                         this.closeLogin();
+                 }
+                  handleSignup(event) {
+                      event.preventDefault();
+                      const name = document.getElementById('signup-name').value;
+                      const email = document.getElementById('signup-email').value;
+                      const password = document.getElementById('signup-password').value;
+
+                      // Here you would store the data in database
+                      const dummyUser = {name: name, email: email};
+                        this.setUserLoggedIn(dummyUser)
+                      this.closeSignup();
+                   }
+             }
+             const cartManager = new CartManager();
+            const authManager = new AuthManager();
+        });
+</script>
+<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+<div id="cart-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="modal-content bg-white rounded-lg w-full max-w-md mx-4 p-6 max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Your Cart</h2>
+            <button id="close-cart"
+                    class="border border-primary-500 text-primary-500 px-8 py-3 rounded-full hover:bg-primary-50 transition-colors">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <div id="cart-items" class="space-y-4">
+            <!-- Cart items will be dynamically added here -->
+        </div>
+        <div id="cart-summary" class="mt-6 border-t pt-4">
+            <div class="flex justify-between font-semibold">
+                <span>Total</span>
+                <span id="cart-total">$0.00</span>
+            </div>
+            <button id="checkout-button"
+                    class="border border-primary-500 text-primary-500 px-8 py-3 rounded-full hover:bg-primary-50 transition-colors">
+                Proceed to Checkout
+            </button>
+        </div>
+    </div>
+</div>
+<div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="modal-content bg-white rounded-lg w-full max-w-md mx-4 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Login</h2>
+            <button id="close-login"
+                    class="border border-primary-500 text-primary-500 px-8 py-3 rounded-full hover:bg-primary-50 transition-colors">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="login-email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="login-password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors w-full">Login</button>
+            <div class="text-center">
+                <p>Don't have an account? <button type="button" id="open-signup" class="text-primary-500 hover:underline">Sign up</button></p>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="modal-content bg-white rounded-lg w-full max-w-md mx-4 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Sign Up</h2>
+            <button id="close-signup"
+                    class="border border-primary-500 text-primary-500 px-8 py-3 rounded-full hover:bg-primary-50 transition-colors">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <form id="signup-form" class="space-y-4">
+            <div>
+                <label for="signup-name" class="block text-sm font-medium text-gray-700">Name</label>
+                <input type="text" id="signup-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="signup-email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="signup-password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="signup-password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors w-full">Sign Up</button>
+            <div class="text-center">
+                <p>Already have an account? <button type="button" id="open-login" class="text-primary-500 hover:underline">Login</button></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer class="bg-gray-900 text-white py-12">
+    <div class="container mx-auto px-4 grid md:grid-cols-4 gap-8">
+        <div>
+            <h3 class="text-xl font-bold mb-4">Tech Haven</h3>
+            <p class="text-gray-400">Innovative tech solutions for a connected world.</p>
+        </div>
+        <div>
+            <h4 class="font-semibold mb-4">Quick Links</h4>
+            <nav class="space-y-2">
+                <a href="#" class="text-gray-300 hover:text-white">Home</a>
+                <a href="#" class="text-gray-300 hover:text-white">Products</a>
+                <a href="#" class="text-gray-300 hover:text-white">About Us</a>
+                <a href="#" class="text-gray-300 hover:text-white">Contact</a>
+            </nav>
+        </div>
+        <div>
+            <h4 class="font-semibold mb-4">Connect</h4>
+            <div class="flex space-x-4">
+                <a href="#" class="text-gray-300 hover:text-white"><i data-feather="facebook"></i></a>
+                <a href="#" class="text-gray-300 hover:text-white"><i data-feather="twitter"></i></a>
+                <a href="#" class="text-gray-300 hover:text-white"><i data-feather="instagram"></i></a>
+            </div>
+        </div>
+        <div>
+            <h4 class="font-semibold mb-4">Newsletter</h4>
+            <form class="flex">
+                <input type="email" placeholder="Your email"
+                       class="w-full px-4 py-2 rounded-l-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <button class="bg-primary-500 text-white px-4 rounded-r-lg hover:bg-primary-600">
+                    <i data-feather="send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</footer>
+</body>
+</html>
