@@ -82,6 +82,21 @@ Here are some potential areas for further development of the Tech Haven e-commer
 *  **Product Search:** Implement a product search bar to filter products.
 *  **User Profile:** Add a user profile area where users can view order history and manage their details.
 
+
+preview
+
+![image](https://github.com/user-attachments/assets/ecf99441-4bb5-4ac2-9ddb-5cfe063ee558)
+![image](https://github.com/user-attachments/assets/53f84807-aa10-422a-b185-1374f904b869)
+![image](https://github.com/user-attachments/assets/ef064bdd-0c46-4768-938d-0826ad477902)
+![image](https://github.com/user-attachments/assets/4b378c55-2e6d-45a1-aebf-70f8346e1134)
+![image](https://github.com/user-attachments/assets/5e667ddc-a68f-4a88-86b1-f3db6991271e)
+![image](https://github.com/user-attachments/assets/e6a1af60-8d37-4371-85f7-fba95b9e88cb)
+![image](https://github.com/user-attachments/assets/33a4729f-6106-4f66-b7d2-cb2d2d075893)
+
+
+
+
+
 ## Credits
 
 *   **Tailwind CSS:** For providing a fantastic utility-first CSS framework.
